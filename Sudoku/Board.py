@@ -1,11 +1,12 @@
-from Sudoku.Cell import Cell
+from sudoku.cell import Cell
 
 
 class Board:
 
+    difficulty = None  # Overwritten by the SudokuGenerator
+
     # initializing a board
     def __init__(self, numbers=None):
-
         # we keep list of cells and dictionaries to point to each cell
         # by various locations
         self.rows = {}

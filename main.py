@@ -1,23 +1,13 @@
 # !/usr/bin/python
 import argparse
 import subprocess
-from collections import OrderedDict
 from datetime import datetime
 from fpdf import FPDF
 from pdf2image import convert_from_path
-from Sudoku.Generator import *
+from sudoku.generator import SudokuGenerator, difficulties
 
 
-DEFAULT_BASE_FILE = 'base.txt'
 DEFAULT_COUNT = 1
-
-# setting difficulties and their cutoffs for each solve method
-difficulties = OrderedDict([
-    ('easy', (35, 0)), 
-    ('medium', (81, 5)), 
-    ('hard', (81, 10)), 
-    ('expert', (81, 15))
-])
 
 
 def copy_to_clipboard(data):
@@ -37,20 +27,6 @@ class SudokuPDF(FPDF):
         self.difficulty_counts = [easy, medium, hard, expert]
         self.owner_page = owner_page
         super().__init__(*args, **kwargs)
-
-    def generate_sudoku_board(self, difficulty):
-        gen = Generator(DEFAULT_BASE_FILE)
-        gen.board.difficulty = difficulty  # TODO: clean this up - move this into the Board code
-        difficulty = difficulties[difficulty]
-        # applying 100 random transformations to puzzle
-        gen.randomize(100)
-        # applying logical reduction with corresponding difficulty cutoff
-        gen.reduce_via_logical(difficulty[0])
-        # catching zero case
-        if difficulty[1] != 0:
-            # applying random reduction with corresponding difficulty cutoff
-            gen.reduce_via_random(difficulty[1])
-        return gen.board
 
     @property
     def puzzle_no(self):
@@ -138,8 +114,8 @@ class SudokuPDF(FPDF):
         for difficulty, count in zip(difficulties, self.difficulty_counts):
             for _ in range(count):
                 self.add_page()
-                board = self.generate_sudoku_board(difficulty)
-                self.draw_sudoku_grid(board)
+                generator = SudokuGenerator(difficulty)
+                self.draw_sudoku_grid(generator.board)
         self.output(filepath)
 
         # Flattened File
