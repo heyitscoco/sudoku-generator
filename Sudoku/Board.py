@@ -44,6 +44,10 @@ class Board:
                 self.boxes[box].append(cell)
                 self.cells.append(cell)
 
+    @property
+    def values(self):
+        return [[cell.value or '' for cell in row] for _, row in sorted(self.rows.items())]
+
     # returning cells in puzzle that are not set to zero
     def get_used_cells(self):
         return [x for x in self.cells if x.value != 0]

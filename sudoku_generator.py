@@ -1,50 +1,177 @@
 # !/usr/bin/python
 import argparse
+import subprocess
+from collections import OrderedDict
+from datetime import datetime
+from fpdf import FPDF
+from pdf2image import convert_from_path
 from Sudoku.Generator import *
 
+
 DEFAULT_BASE_FILE = 'base.txt'
+DEFAULT_COUNT = 1
 
 # setting difficulties and their cutoffs for each solve method
-difficulties = {
-    'easy': (35, 0), 
-    'medium': (81, 5), 
-    'hard': (81, 10), 
-    'extreme': (81, 15)
-}
-
-def main(difficulty, base=DEFAULT_BASE_FILE):
-    # constructing generator object from puzzle file (space delimited columns, line delimited rows)
-    difficulty = difficulties[difficulty]
-    gen = Generator(base)
-
-    # applying 100 random transformations to puzzle
-    gen.randomize(100)
-
-    # getting a copy before slots are removed
-    initial = gen.board.copy()
-
-    # applying logical reduction with corresponding difficulty cutoff
-    gen.reduce_via_logical(difficulty[0])
-
-    # catching zero case
-    if difficulty[1] != 0:
-        # applying random reduction with corresponding difficulty cutoff
-        gen.reduce_via_random(difficulty[1])
+difficulties = OrderedDict([
+    ('easy', (35, 0)), 
+    ('medium', (81, 5)), 
+    ('hard', (81, 10)), 
+    ('expert', (81, 15))
+])
 
 
-    # getting copy after reductions are completed
-    final = gen.board.copy()
+def copy_to_clipboard(data):
+    subprocess.run("pbcopy", text=True, input=data)
 
-    # printing out complete board (solution)
-    print("The initial board before removals was: \r\n\r\n{0}".format(initial))
 
-    # printing out board after reduction
-    print("The generated board after removals was: \r\n\r\n{0}".format(final))
+def flatten_pdf(input_pdf_path, output_pdf_path, dpi=400, resolution=400.0):
+    images = convert_from_path(input_pdf_path, dpi=dpi)
+    im1 = images[0]
+    images.pop(0)
+    im1.save(output_pdf_path, "PDF", resolution=resolution, save_all=True, append_images=images)
 
+
+class SudokuPDF(FPDF):
+
+    def __init__(self, *args, owner_page=True, easy=0, medium=0, hard=0, expert=0, **kwargs):
+        self.difficulty_counts = [easy, medium, hard, expert]
+        self.owner_page = owner_page
+        super().__init__(*args, **kwargs)
+
+    def generate_sudoku_board(self, difficulty):
+        gen = Generator(DEFAULT_BASE_FILE)
+        gen.board.difficulty = difficulty  # TODO: clean this up - move this into the Board code
+        difficulty = difficulties[difficulty]
+        # applying 100 random transformations to puzzle
+        gen.randomize(100)
+        # applying logical reduction with corresponding difficulty cutoff
+        gen.reduce_via_logical(difficulty[0])
+        # catching zero case
+        if difficulty[1] != 0:
+            # applying random reduction with corresponding difficulty cutoff
+            gen.reduce_via_random(difficulty[1])
+        return gen.board
+
+    @property
+    def puzzle_no(self):
+        return self.page_no() - int(self.owner_page)
+
+    @property
+    def left_side_gutter(self):
+        return self.page_no() % 2 == 0
+
+    @property
+    def x_offset(self):
+        return .55 if self.left_side_gutter else .9
+
+    @property
+    def y_offset(self):
+        return 1.5
+
+    @property
+    def cell_size(self):
+        return self.w / 12
+
+    @property
+    def section_size(self):
+        return self.cell_size * 3
+
+    @property
+    def grid_size(self):
+        return self.section_size * 3
+
+    def draw_owner_page(self):
+        line_width = 2.69
+        x_offset = 1.655
+        y_offset = 2
+        cell_height = 0.25
+        line_distance = .75
+        self.set_font('NunitoLight', size=12)
+        for label in ('Owner:', 'Phone:', 'Email:'):
+            self.set_xy(x_offset, y_offset)
+            self.cell(line_width, cell_height, label, border='B')
+            y_offset += line_distance
+
+    def draw_sudoku_grid(self, board):
+        self.set_font('Montserrat', size=24)
+        self.set_line_width(0.001)
+        self.set_xy(self.x_offset, 1)
+        self.cell(self.x_offset, 0, f'No. {self.puzzle_no}', 0, 1, 'L')
+        self.ln()
+
+        # Draw the grid cells
+        self.set_font('NunitoLight', size=16)
+        grid = board.values
+        for i in range(9):
+            for j in range(9):
+                x = j * self.cell_size + self.x_offset
+                y = i * self.cell_size + self.y_offset
+                self.set_xy(x, y)
+                self.cell(self.cell_size, self.cell_size, str(grid[i][j]), border=1, align='C')
+
+        # Draw thick borders
+        self.set_line_width(0.05)
+        self.rect(self.x_offset, self.y_offset, self.grid_size, self.grid_size)
+        self.set_line_width(0.025)
+        self.rect(self.x_offset, self.y_offset + self.section_size, self.grid_size, self.section_size)
+        self.rect(self.x_offset + self.section_size, self.y_offset, self.section_size, self.grid_size)
+
+        self.set_font('Montserrat')
+        self.set_xy(self.x_offset, self.y_offset + self.grid_size + self.cell_size * .25)
+        self.cell(0, self.cell_size * .5, txt=board.difficulty.upper())
+
+    def setup_fonts(self):
+        self.add_font('NunitoLight', '', 'fonts/Nunito/static/Nunito-Light.ttf', uni=True)
+        self.add_font('Montserrat', '', 'fonts/Montserrat/Montserrat-VariableFont_wght.ttf', uni=True)
+
+    def create_pdf(self, flatten=False):
+        filename = datetime.now().strftime(f'sudoku-grids/sudoku-{"_".join([str(c) for c in self.difficulty_counts])}-%b%e-%H_%M_%S-%Y')
+        filepath = f'{filename}.pdf'
+        filepath_flat = f'{filename}-flat.pdf'
+        self.setup_fonts()
+
+        # Owner Page
+        self.add_page()
+        self.draw_owner_page()
+
+        # Puzzle Pages
+        for difficulty, count in zip(difficulties, self.difficulty_counts):
+            for _ in range(count):
+                self.add_page()
+                board = self.generate_sudoku_board(difficulty)
+                self.draw_sudoku_grid(board)
+        self.output(filepath)
+
+        # Flattened File
+        if flatten:
+            flatten_pdf(filepath, filepath_flat)
+            copy_to_clipboard(filepath_flat)
+        else:
+            copy_to_clipboard(filepath)
+
+
+class SudokuArgParser(argparse.ArgumentParser):
+
+    def parse_args(self):
+        args = super().parse_args().__dict__
+        count = args.pop('count', None)
+        if count:
+            group_size = round(count / 4)
+            args['easy'] = args['medium'] = args['hard'] = args['expert'] = group_size
+        return args
+            
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('difficulty', choices=difficulties.keys())
-    parser.add_argument('--base', default=DEFAULT_BASE_FILE, help='Path to a base puzzle file (space delimited columns, line delimited rows)')
+    parser = SudokuArgParser()
+    parser.add_argument('--count', type=int, nargs='?', help='The total number of puzzles to include.')
+    parser.add_argument('--easy', '-e', type=int, default=0, help='The number of easy puzzles to include.')
+    parser.add_argument('--medium', '-m', type=int, default=0, help='The number of medium puzzles to include.')
+    parser.add_argument('--hard', type=int, default=0, help='The number of hard puzzles to include.')
+    parser.add_argument('--expert', '-ex', type=int, default=0, help='The number of expert puzzles to include.')
     args = parser.parse_args()
-    main(**args.__dict__)
+    print(args)
+    SudokuPDF(
+        unit='in',
+        format=(6, 9),
+        **args
+    ).create_pdf(flatten=True)
