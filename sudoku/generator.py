@@ -1,13 +1,11 @@
 import random
 from functools import reduce
 
-from sudoku.difficulty import difficulties
-from sudoku.board import Board
-from sudoku.solver import Solver
+from .board import Board
+from .solver import Solver
 
 
 BASE_FILE = 'base.txt'
-
 
 class Generator:
 
@@ -21,11 +19,11 @@ class Generator:
 
         # constructing board
         self.board = Board(numbers)
-        self._generate_sudoku_board(difficulty)
+        self._populate_board(difficulty)
 
-    def _generate_sudoku_board(self, difficulty):
+    def _populate_board(self, difficulty):
         self.board.difficulty = difficulty
-        # applying 100 random transformations to puzzle
+        # applying random transformations to the finished puzzle
         self._randomize(100)
         # Use difficulty cutoffs to apply logical & random reduction
         self._reduce_via_logical(difficulty.logical_cutoff)
@@ -51,9 +49,7 @@ class Generator:
 
             # in order to select which row and column we shuffle an array of
             # indices and take both elements
-            options = list(range(0, 3))
-            random.shuffle(options)
-            piece1, piece2 = options[0], options[1]
+            piece1, piece2 = random.sample([0, 1, 2], 2)
 
             # pick case according to random to do transformation
             if case == 0:
@@ -63,7 +59,9 @@ class Generator:
             elif case == 2:
                 self.board.swap_stack(piece1, piece2)
             elif case == 3:
-                self.board.swap_band(piece1, piece2)            
+                self.board.swap_band(piece1, piece2)      
+
+        assert Solver(self.board).is_valid(), f'Invalid Sudoku board!\n{self.board}'
 
     # method gets all possible values for a particular cell, if there is only one
     # then we can remove that cell
@@ -122,5 +120,7 @@ class Generator:
     # Unused. Returns current state of generator including number of
     # empty cells and a representation of the puzzle
     def get_current_state(self):
-        template = "There are currently %d starting cells.\n\rCurrent puzzle state:\n\r\n\r%s\n\r"
-        return template % (len(self.board.get_used_cells()), self.board.__str__())
+        return (
+            f'There are currently {len(self.board.get_used_cells())} starting cells.\n\r'
+            f'Current puzzle state:\n\r\n\r{self.board.__str__()}\n\r'
+        )

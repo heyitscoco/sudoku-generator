@@ -9,13 +9,13 @@ class Solver:
     def is_valid(self):
         valid = set(range(1, 10))
         for i, box in self.board.boxes.items():
-            if not valid == set([x.value for x in box]):
+            if set([x.value for x in box]) != valid:
                 return False
         for i, row in self.board.rows.items():
-            if not valid == set([x.value for x in row]):
+            if set([x.value for x in row]) != valid:
                 return False
         for i, col in self.board.columns.items():
-            if not valid == set([x.value for x in col]):
+            if set([x.value for x in col]) != valid:
                 return False
         return True
 
