@@ -1,23 +1,15 @@
 import random
-from collections import OrderedDict
 from functools import reduce
 
+from sudoku.difficulty import difficulties
 from sudoku.board import Board
 from sudoku.solver import Solver
 
 
 BASE_FILE = 'base.txt'
 
-# setting difficulties and their cutoffs for each solve method
-difficulties = OrderedDict([
-    ('easy', (35, 0)), 
-    ('medium', (81, 5)), 
-    ('hard', (81, 10)), 
-    ('expert', (81, 15))
-])
 
-
-class SudokuGenerator:
+class Generator:
 
     # constructor for generator, reads in a space delimited
     def __init__(self, difficulty):
@@ -33,15 +25,12 @@ class SudokuGenerator:
 
     def _generate_sudoku_board(self, difficulty):
         self.board.difficulty = difficulty
-        difficulty = difficulties[difficulty]
         # applying 100 random transformations to puzzle
         self._randomize(100)
-        # applying logical reduction with corresponding difficulty cutoff
-        self._reduce_via_logical(difficulty[0])
-        # catching zero case
-        if difficulty[1] != 0:
-            # applying random reduction with corresponding difficulty cutoff
-            self._reduce_via_random(difficulty[1])
+        # Use difficulty cutoffs to apply logical & random reduction
+        self._reduce_via_logical(difficulty.logical_cutoff)
+        if difficulty.random_cutoff:
+            self._reduce_via_random(difficulty.random_cutoff)
         return self.board
 
     # function randomizes an existing complete puzzle

@@ -4,8 +4,9 @@ import subprocess
 from datetime import datetime
 from fpdf import FPDF
 from pdf2image import convert_from_path
-from sudoku.generator import SudokuGenerator, difficulties
-
+from sudoku.difficulty import difficulties
+from sudoku.generator import Generator as SudokuGenerator
+from exceptions import ConfigurationError
 
 DEFAULT_COUNT = 1
 
@@ -24,6 +25,9 @@ def flatten_pdf(input_pdf_path, output_pdf_path, dpi=400, resolution=400.0):
 class SudokuPDF(FPDF):
 
     def __init__(self, *args, owner_page=True, easy=0, medium=0, hard=0, expert=0, **kwargs):
+        if [d.name for d in difficulties] != ['Easy', 'Medium', 'Hard', 'Expert']:
+            raise ConfigurationError('Invalid difficulty options.')
+
         self.difficulty_counts = [easy, medium, hard, expert]
         self.owner_page = owner_page
         super().__init__(*args, **kwargs)
@@ -94,7 +98,7 @@ class SudokuPDF(FPDF):
 
         self.set_font('Montserrat')
         self.set_xy(self.x_offset, self.y_offset + self.grid_size + self.cell_size * .25)
-        self.cell(0, self.cell_size * .5, txt=board.difficulty.upper())
+        self.cell(0, self.cell_size * .5, txt=board.difficulty.name.upper())
 
     def setup_fonts(self):
         self.add_font('NunitoLight', '', 'fonts/Nunito/static/Nunito-Light.ttf', uni=True)
