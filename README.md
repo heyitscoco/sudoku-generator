@@ -1,37 +1,39 @@
-## What
-This is a sudoku generating application. It generates a sudoku puzzle with a unique solution
-of varying difficulties according to the requested difficulty. It guarantees that there is always
-a single unique solution for the puzzles it generates.
+# Overview
+This is a tool for generating sudoku books, based on Paul Rutledge's original sudoku implementation. The original code has been extended so that it can generate PDF manuscripts with puzzles of varying difficulty.
 
-## Why
-This was one of my projects for a math modeling class in college.
+The final product has several features that make it suitable for uploading to KDP or other platforms:
+- It produces a fully flattened PDF.
+- Each page is slightly offset, so that they'll look properly centered once the gutter is applied.
+- An owner page is included by default.
 
-## Status
-This is not being actively developed, though there are certainly
-improvements that could be made.
+<img width="255" alt="Owner page screenshot" src="https://github.com/heyitscoco/sudoku-generator/assets/10701968/1dfe5951-f648-48c0-aa27-b56fd4d69511">
 
-## So what?
-Yep, lots of sudoku generators exist. Something cool that makes this one unique is
-the concept of board density in relation to difficulty. The basic idea is that the
-more disjoint the set of starting cells is, the more difficult the puzzle will be
-to solve. This goes beyond the normal measure of "less starting cells is more difficult"
-and begins to consider what particular configurations of those starting cells makes for
-the most difficult puzzle.
+<img width="255" alt="Easy sudoku screenshot" src="https://github.com/heyitscoco/sudoku-generator/assets/10701968/161f2392-a6db-4c6e-8379-3fb32864e064">
 
-## How do I use it?
+<img width="255" alt="Medium sudoku screenshot" src="https://github.com/heyitscoco/sudoku-generator/assets/10701968/2b281808-63b6-4a81-af48-234477ab9fee">
+
+
+# Setup
 ```bash
-python3 sudoku_generator.py base.txt <difficulty>
+# Create and activate the virtual environment of your choice
+virtualenv env && source env/bin/activate
+
+# Install dependencies
+make install
 ```
 
-## Difficulties & Sample Results
-### easy
-<table><tr><td> </td><td> </td><td> </td><td>7</td><td>9</td><td>8</td><td> </td><td>4</td><td>2</td></tr><tr><td> </td><td>7</td><td>8</td><td> </td><td> </td><td> </td><td>6</td><td> </td><td>3</td></tr><tr><td>1</td><td>4</td><td> </td><td> </td><td>6</td><td>3</td><td> </td><td>7</td><td>8</td></tr><tr><td>5</td><td>6</td><td>4</td><td> </td><td>8</td><td> </td><td> </td><td>3</td><td>1</td></tr><tr><td>8</td><td> </td><td> </td><td> </td><td>2</td><td>1</td><td>5</td><td> </td><td>4</td></tr><tr><td> </td><td> </td><td> </td><td>6</td><td> </td><td>4</td><td> </td><td>9</td><td> </td></tr><tr><td>3</td><td> </td><td>5</td><td>2</td><td> </td><td> </td><td>7</td><td> </td><td> </td></tr><tr><td>4</td><td> </td><td>6</td><td>8</td><td>7</td><td>9</td><td> </td><td>1</td><td> </td></tr><tr><td>7</td><td>8</td><td> </td><td>1</td><td>3</td><td> </td><td>4</td><td>2</td><td>6</td></tr></table>
+# Usage
 
-### medium
-<table><tr><td>3</td><td>1</td><td> </td><td> </td><td>6</td><td> </td><td> </td><td> </td><td> </td></tr><tr><td> </td><td> </td><td>9</td><td> </td><td> </td><td> </td><td>6</td><td>2</td><td> </td></tr><tr><td>4</td><td> </td><td> </td><td> </td><td>9</td><td>8</td><td> </td><td> </td><td>3</td></tr><tr><td> </td><td> </td><td>3</td><td>9</td><td>8</td><td> </td><td> </td><td>4</td><td>1</td></tr><tr><td> </td><td>7</td><td>8</td><td>1</td><td> </td><td> </td><td> </td><td>5</td><td> </td></tr><tr><td> </td><td> </td><td>2</td><td>6</td><td> </td><td>5</td><td> </td><td> </td><td>9</td></tr><tr><td> </td><td> </td><td> </td><td> </td><td>4</td><td>6</td><td>7</td><td>9</td><td>8</td></tr><tr><td>5</td><td>6</td><td> </td><td> </td><td> </td><td>9</td><td>1</td><td> </td><td> </td></tr><tr><td>8</td><td> </td><td>7</td><td> </td><td> </td><td>3</td><td>4</td><td> </td><td> </td></tr></table>
+```bash
+# Creates 25 easy, 25 medium, 25 hard, 25 expert
+python main.py --count 100
 
-### hard
-<table><tr><td> </td><td> </td><td> </td><td>2</td><td> </td><td> </td><td> </td><td>6</td><td> </td></tr><tr><td> </td><td>1</td><td> </td><td> </td><td> </td><td>4</td><td>8</td><td> </td><td> </td></tr><tr><td>6</td><td>4</td><td> </td><td> </td><td> </td><td> </td><td> </td><td>3</td><td> </td></tr><tr><td> </td><td> </td><td>6</td><td> </td><td>7</td><td>8</td><td> </td><td> </td><td>2</td></tr><tr><td> </td><td> </td><td>1</td><td>6</td><td> </td><td>3</td><td> </td><td> </td><td>8</td></tr><tr><td> </td><td>8</td><td>9</td><td> </td><td> </td><td> </td><td> </td><td>5</td><td>3</td></tr><tr><td> </td><td>9</td><td> </td><td> </td><td> </td><td> </td><td>4</td><td>2</td><td> </td></tr><tr><td>2</td><td> </td><td> </td><td>7</td><td> </td><td> </td><td> </td><td> </td><td>5</td></tr><tr><td>1</td><td>5</td><td> </td><td>4</td><td>2</td><td> </td><td>7</td><td> </td><td> </td></tr></table>
+# Creates 100 easy, 25 medium
+python main.py --easy 100 --medium 50
+```
 
-### expert
-<table><tr><td> </td><td> </td><td> </td><td>7</td><td> </td><td> </td><td>3</td><td> </td><td>2</td></tr><tr><td> </td><td> </td><td> </td><td>4</td><td> </td><td> </td><td>9</td><td> </td><td> </td></tr><tr><td>8</td><td>7</td><td> </td><td> </td><td>3</td><td> </td><td> </td><td> </td><td>5</td></tr><tr><td> </td><td>2</td><td> </td><td> </td><td>5</td><td> </td><td> </td><td>8</td><td> </td></tr><tr><td> </td><td> </td><td>7</td><td>2</td><td> </td><td>1</td><td> </td><td> </td><td> </td></tr><tr><td>6</td><td> </td><td>5</td><td> </td><td> </td><td>9</td><td>4</td><td> </td><td> </td></tr><tr><td>3</td><td> </td><td>1</td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr><tr><td>4</td><td>6</td><td> </td><td> </td><td>8</td><td> </td><td> </td><td> </td><td> </td></tr><tr><td> </td><td> </td><td> </td><td>5</td><td>1</td><td>3</td><td> </td><td> </td><td> </td></tr></table>
+# Limitations & Future Improvements
+- If the `--count` option is used with a value that isn't divisible by 4, it will create fewer puzzles than requested. (Ex., `--count 10` will create 2 puzzles of each type, or 8 in total.)
+- It can only create 6"x9" manuscripts.
+- It doesn't include answer keys.
+- The puzzles are always in order of difficulty; there's no way to randomize the order.
