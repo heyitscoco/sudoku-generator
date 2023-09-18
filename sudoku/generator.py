@@ -19,6 +19,7 @@ class Generator:
 
         # constructing board
         self.board = Board(numbers)
+        self.solution = self.board.copy()
         self._populate_board(difficulty)
 
     def _populate_board(self, difficulty):

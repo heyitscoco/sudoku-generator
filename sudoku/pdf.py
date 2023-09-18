@@ -5,6 +5,7 @@ from pdf2image import convert_from_path
 from sudoku.difficulty import difficulties
 from sudoku.generator import Generator as SudokuGenerator
 from exceptions import ConfigurationError
+from utils import batched
 
 DEFAULT_COUNT = 1
 
@@ -97,7 +98,8 @@ class SudokuPDF(FPDF):
 
         self.set_font('Montserrat')
         self.set_xy(self.x_offset, self.y_offset + self.grid_size + self.cell_size * .25)
-        self.cell(0, self.cell_size * .5, txt=board.difficulty.name.upper())
+        if board.difficulty:
+            self.cell(0, self.cell_size * .5, txt=board.difficulty.name.upper())
 
     def setup_fonts(self):
         self.add_font('NunitoLight', '', 'fonts/Nunito/static/Nunito-Light.ttf', uni=True)
@@ -113,12 +115,26 @@ class SudokuPDF(FPDF):
         self.add_page()
         self.draw_owner_page()
 
-        # Puzzle Pages
+        # Generate puzzles
+        boards = []
+        solutions = []
         for difficulty, count in zip(difficulties, self.difficulty_counts):
             for _ in range(count):
-                self.add_page()
                 generator = SudokuGenerator(difficulty)
-                self.draw_sudoku_grid(generator.board)
+                boards.append(generator.board)
+                solutions.append(generator.solution)
+
+        # Draw puzzle pages
+        for board in boards:
+            self.add_page()
+            self.draw_sudoku_grid(board)
+
+        # Draw solution pages
+        for batch in batched(solutions, 4):
+            for solution in batch:
+                self.add_page()
+                self.draw_sudoku_grid(solution)
+
         self.output(filepath)
 
         # Flattened File
