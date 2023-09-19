@@ -24,4 +24,4 @@ class SudokuArgumentParser(argparse.ArgumentParser):
 if __name__ == '__main__':
     args = SudokuArgumentParser().parse_args()
     print(args)
-    SudokuPDF(unit='in', format=(6, 9), **args).create_pdf(flatten=True)
+    SudokuPDF(unit='in', format=(6, 9), **args).create_pdf()
