@@ -20,32 +20,30 @@ class SudokuPDF(PDFDimensionsMixin, FPDF):
 
     def footer(self):
         if self.page_no >= 1:
-            self.set_font('Montserrat', size=12)
+            self.set_font('Montserrat', size=self.font_size_sm)
             page_no = str(self.page_no)
             self.set_xy(self.center - self.get_string_width(page_no), -(self.width / 6))
             self.cell(1, 1, page_no, 0, 0, 'L')
 
-    def _draw_owner_page(self):
+    def _draw_contact_page(self):
         self.add_page()
-        line_length = self.width / 1.75
-        cell_height = 0.25
-        left_offset = self.center - (line_length / 2)
+        self.set_font('Montserrat', size=self.font_size_sm)
+        self.set_line_width(self.line_width_sm * 1.5)
+        left_offset = self.center - (self.contact_line_length / 2)
         top_offset = self.height / 4.5
-        self.set_font('Montserrat', size=12)
-        self.set_line_width(0.01)
         for text in ('Owner:', 'Phone:', 'Email:'):
             self.set_xy(left_offset, top_offset)
-            self.cell(line_length, cell_height, text, border='B')
+            self.cell(self.contact_line_length, .25, text, align='L', border='B')
             top_offset += self.line_spacing_lg
 
     def _draw_table_of_contents(self):
         self.add_page()
-        self.set_font('Montserrat', size=30)
-        self.set_line_width(0.001)
+        self.set_font('Montserrat', size=self.font_size_xl)
+        self.set_line_width(self.line_width_sm)
         self.set_xy(self.l_margin, self.t_margin)
         self.cell(self.l_margin, 0, 'Table of Contents', 0, 1, 'L')
 
-        self.set_font('Montserrat', size=24)
+        self.set_font('Montserrat', size=self.font_size_lg)
         section_names = [*(d.name for d in difficulties), 'Solutions']
         counts = [*(c for c in self._difficulty_counts), 1]
         top_offset = self.t_margin + self.line_spacing_lg
@@ -59,20 +57,20 @@ class SudokuPDF(PDFDimensionsMixin, FPDF):
 
     def _draw_chapter_page(self, title):
         self.add_page()
-        self.set_font('Montserrat', size=48)
-        self.set_line_width(0.001)
+        self.set_font('Montserrat', size=self.font_size_xl)
+        self.set_line_width(self.line_width_sm)
         self.set_xy(self.l_margin, self.height * .4)
         self.cell(self.l_margin, 0, title.upper(), 0, 1, 'L')
 
     def _draw_sudoku_grid(self, board, puzzle_no):
-        self.set_font('Montserrat', size=24)
+        self.set_font('Montserrat', size=self.font_size_lg)
         self.set_line_width(0.001)
         self.set_xy(self.l_margin, self.t_margin)
         self.cell(0, 0, f'No. {puzzle_no}', 0, 1, 'L')
         self.ln()
 
         # Draw the grid cells
-        self.set_font('NunitoLight', size=16)
+        self.set_font('NunitoLight', size=self.font_size_md)
         grid = board.values
         t_margin = self.t_margin + self.line_spacing_sm * 1.5
         for i in range(9):
@@ -119,7 +117,7 @@ class SudokuPDF(PDFDimensionsMixin, FPDF):
 
     def create_pdf(self):
         difficulty_counts_string = "_".join([str(c) for c in self._difficulty_counts])
-        filename = datetime.now().strftime(f'sudoku-grids/sudoku-{difficulty_counts_string}-%b%e-%H_%M_%S-%Y')
+        filename = datetime.now().strftime(f'sudoku-grids/sudoku-{self.width}x{self.height}-{difficulty_counts_string}-%b%e-%H_%M_%S-%Y')
         filepath = f'{filename}.pdf'
         filepath_flat = f'{filename}-flat.pdf'
         self._setup_fonts()
@@ -129,7 +127,7 @@ class SudokuPDF(PDFDimensionsMixin, FPDF):
         boards = [[g.board for g in batch] for batch in generators]
         solutions = [g.solution for batch in generators for g in batch]
 
-        self._draw_owner_page()
+        self._draw_contact_page()
         self._draw_table_of_contents()
         self._draw_boards(boards)
         self._draw_solutions(solutions)
